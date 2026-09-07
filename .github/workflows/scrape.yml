@@ -1,0 +1,35 @@
+name: Daily Internship Scrape
+
+on:
+  schedule:
+    # 4:30 UTC = 10:00 AM IST
+    - cron: '30 4 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write Google credentials file
+        run: echo '${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}' > credentials.json
+
+      - name: Run scraper
+        env:
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GCP_CREDENTIALS_PATH: credentials.json
+        run: python main.py
+
+      - name: Clean up credentials file
+        if: always()
+        run: rm -f credentials.json
